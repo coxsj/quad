@@ -1,6 +1,3 @@
-// IMPORTANT!! Only use js here.
-// This file should have no P5 dependencies.
-
 class Point {
   constructor(x, y, i) {
     this.x = x;
@@ -19,6 +16,50 @@ class Quad {
     this.points = [];
     this.subdivided = false;
   }
+  clear() {
+    if (!this.subdivided){
+      this.points = [];
+      return;
+    }
+    //Subdivided
+    for(let i=0; i < this.subTrees.length; i++)
+      this.subTrees[i].clear();
+    this.subTrees = [];
+    this.subdivided=false;
+    return;
+  }
+  distributePointsIntoSubTrees(){
+    // Distribute points into subtrees
+    for (let i = this.points.length - 1; i >= 0; i--){
+      this.insertInSubTree(this.points[i]);
+      this.points.pop();
+    }
+  }
+  draw() {
+    if (!this.subdivided){
+      this.boundary.draw();
+       return;
+    } 
+    for(let i=0; i < this.subTrees.length; i++)
+      this.subTrees[i].draw();
+  }
+  findIndicesIn(range){
+    // Routine updates global indexInRange which is much faster
+    // than passing arrays around.
+    if(!overlaps(this.boundary, range)) return;
+    // Range overlaps this quad
+    if(!this.subdivided){
+      for (let i = 0; i < this.points.length; i ++){
+        if(inBoundary(this.points[i], range)){
+           indexInRange.push(this.points[i].i);
+        }
+      }
+      return;
+    }
+    //Subdivided
+    for(let i=0; i < this.subTrees.length; i++)
+      this.subTrees[i].findIndicesIn(range);
+  }
   insert(point) {
     if (!this.subdivided) {
       this.points.push(point);
@@ -35,13 +76,6 @@ class Quad {
         this.subTrees[i].insert(point);
         break;
       }
-    }
-  }
-  distributePointsIntoSubTrees(){
-    // Distribute points into subtrees
-    for (let i = this.points.length - 1; i >= 0; i--){
-      this.insertInSubTree(this.points[i]);
-      this.points.pop();
     }
   }
   subdivide() {
@@ -78,42 +112,5 @@ class Quad {
     this.subTrees.push(new Quad(ne, this.capacity));
     this.subTrees.push(new Quad(sw, this.capacity));
     this.subTrees.push(new Quad(se, this.capacity));
-  }
-  clear() {
-    if (!this.subdivided){
-      this.points = [];
-      return;
-    }
-    //Subdivided
-    for(let i=0; i < this.subTrees.length; i++)
-      this.subTrees[i].clear();
-    this.subTrees = [];
-    this.subdivided=false;
-    return;
-  }
-  draw() {
-    if (!this.subdivided){
-      this.boundary.draw();
-       return;
-    } 
-    for(let i=0; i < this.subTrees.length; i++)
-      this.subTrees[i].draw();
-  }
-  findIndicesIn(range){
-    // Routine updates global indexInRange which is much faster
-    // than passing arrays around.
-    if(!overlaps(this.boundary, range)) return;
-    // Range overlaps this quad
-    if(!this.subdivided){
-      for (let i = 0; i < this.points.length; i ++){
-        if(inBoundary(this.points[i], range)){
-           indexInRange.push(this.points[i].i);
-        }
-      }
-      return;
-    }
-    //Subdivided
-    for(let i=0; i < this.subTrees.length; i++)
-      this.subTrees[i].findIndicesIn(range);
   }
 }
