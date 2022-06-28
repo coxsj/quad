@@ -34,7 +34,6 @@ function draw() {
 }
 //*************************************************
 function drawBalls() {
-  loadIndexInRange();
   let currentHighlight = 0;
   for (let i = 0; i < balls.length; i++) {
     if (i == indexInRange[currentHighlight]) {
@@ -75,16 +74,6 @@ function initializeRange() {
   range.setStrokeWeight(2);
   range.setStrokeColor(0, 255, 0);
 }
-function loadIndexInRange() {
-  // Load inRange with indexes of all balls in range.
-  indexInRange = [];
-  qt.findIndicesIn(range);
-  //indexInRange.sort();
-  indexInRange = indexInRange.sort(function (a, b) {
-    return a - b;
-  });
-  //console.log(indexInRange);
-}
 function updateBallArray(numBalls) {
   if (numBalls < 1) {
     console.error("Bad num balls");
@@ -105,6 +94,16 @@ function updateBalls() {
   for (let i = 0; i < balls.length; i++)
     balls[i].update();
 }
+function updateBallsInRange() {
+  // Load inRange with indexes of all balls in range.
+  indexInRange = [];
+  qt.findIndicesIn(range);
+  //indexInRange.sort();
+  indexInRange = indexInRange.sort(function (a, b) {
+    return a - b;
+  });
+  //console.log(indexInRange);
+}
 function updateQuadTree() {
   qt.clear();
   for (let i = 0; i < balls.length; i++) {
@@ -115,6 +114,7 @@ function updateQuadTree() {
 function updateScene() {
   updateBalls();
   updateQuadTree();
+  updateBallsInRange();
 }
 function updateSim() {
   let val = int(numBallsSlider.value());
