@@ -22,7 +22,6 @@ class Rectangle {
     this.strokeWeight = newStrokeWeight;
   }
 }
-
 function inBoundary(point, boundary) {
   return (
     point.x >= boundary.x - boundary.w / 2 &&
@@ -31,7 +30,6 @@ function inBoundary(point, boundary) {
     point.y <= boundary.y + boundary.h / 2
   );
 }
-
 function overlaps(boundary, range) {
   // If one rectangle is to the left of the other, no overlap
   // If one rectangle is above the other, no overlap

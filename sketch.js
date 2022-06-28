@@ -2,12 +2,14 @@ let canvasW, canvasH;
 let backgroundColor;
 let qt
 let balls = [];
-const startingBalls = 500;
+let minBallRadius = 2;
+let maxBallRadius = 20;
+const startingBalls = 300;
 const minBalls = 1;
-const maxBalls = 5000;
+const maxBalls = 2500;
 let numBallsSlider;
 let numBallsText;
-let range;
+let highlightRange;
 let inRange = [];
 let indexInRange = [];
 
@@ -22,7 +24,7 @@ function setup() {
   initializeCanvas();
   initializeBallSlider();
   updateBallArray(startingBalls);
-  initializeRange();
+  initializeHighlightRange();
   initializeQuadTree();
 }
 
@@ -34,22 +36,21 @@ function draw() {
 }
 //*************************************************
 function drawBalls() {
-  let currentHighlight = 0;
-  for (let i = 0; i < balls.length; i++) {
-    if (i == indexInRange[currentHighlight]) {
-      balls[i].highlight();
-      currentHighlight++;
-    }
-    else balls[i].draw();
-  }
+  for (let i = 0; i < balls.length; i++)
+    balls[i].draw();
 }
 function drawScene() {
   clear();
   background(backgroundColor);
   qt.draw();
   drawBalls();
-  range.draw();
+  highlightRange.draw();
   //text("text", 20, 10);
+}
+function findBallsIn(range) {
+  // Load inRange with indexes of all balls in range.
+  indexInRange = [];
+  qt.findIndicesIn(range);
 }
 function initializeBallSlider() {
   numBallsSlider = createSlider(minBalls, maxBalls, startingBalls, 0);
@@ -69,10 +70,10 @@ function initializeQuadTree() {
     canvasH);
   qt = new Quad(boundary, 4);
 }
-function initializeRange() {
-  range = new Rectangle(canvasW / 2, canvasH / 2, 153, 177);
-  range.setStrokeWeight(2);
-  range.setStrokeColor(0, 255, 0);
+function initializeHighlightRange() {
+  highlightRange = new Rectangle(canvasW / 2, canvasH / 2, 153, 177);
+  highlightRange.setStrokeWeight(2);
+  highlightRange.setStrokeColor(0, 255, 0);
 }
 function updateBallArray(numBalls) {
   if (numBalls < 1) {
@@ -84,7 +85,7 @@ function updateBallArray(numBalls) {
   if (currentBalls == numBalls) return;
   if (currentBalls < numBalls) {
     for (let i = currentBalls; i < numBalls; i++)
-      balls.push(new Ball());
+      balls.push(new Ball(minBallRadius, maxBallRadius));
     return;
   }
   //Remove excess balls
@@ -94,15 +95,34 @@ function updateBalls() {
   for (let i = 0; i < balls.length; i++)
     balls[i].update();
 }
-function updateBallsInRange() {
-  // Load inRange with indexes of all balls in range.
-  indexInRange = [];
-  qt.findIndicesIn(range);
-  //indexInRange.sort();
-  indexInRange = indexInRange.sort(function (a, b) {
-    return a - b;
-  });
-  //console.log(indexInRange);
+function updateBallsInHighlightRange() {
+  findBallsIn(highlightRange);
+  //Mark balls in highlight range as highlight
+  for (let i = 0; i < indexInRange.length; i++)
+    balls[indexInRange[i]].highlighted = true;
+}
+function updateOverlappingBalls() {
+  let localRange = new Rectangle();
+  for (let i = 0; i < balls.length; i++) {
+    //Only update non-overlapped balls
+    if (balls[i].overlapped) continue;
+    //Query the quadtree to get close neighbors of this ball
+    //The range for close neighbors is centred on the x, y of this ball
+    // with width and height of r+largestBallradius+margin.
+    localRange.w = balls[i].radius + maxBallRadius + 1;
+    localRange.h = localRange.w;
+    localRange.x = balls[i].x;
+    localRange.y = balls[i].y;
+    findBallsIn(localRange);
+    if (indexInRange.length < 2) continue;
+    //console.log("neighbors", indexInRange.length);
+    //Then, find first overlap with these close neighbors
+    //Both will be marked overlapped
+    for (let j = 0; j < indexInRange.length; j++){
+      if(i === indexInRange[j]) continue;
+      if (balls[i].overlaps(balls[indexInRange[j]])) break;
+    }
+  }
 }
 function updateQuadTree() {
   qt.clear();
@@ -114,7 +134,8 @@ function updateQuadTree() {
 function updateScene() {
   updateBalls();
   updateQuadTree();
-  updateBallsInRange();
+  updateOverlappingBalls();
+  updateBallsInHighlightRange();
 }
 function updateSim() {
   let val = int(numBallsSlider.value());
@@ -125,8 +146,8 @@ function mouseDragged() {
   //console.log(mouseX, mouseY);
   if ((mouseX <= canvasW && mouseX >= 0) &&
     (mouseY <= canvasH && mouseY >= 0)) {
-    range.x = mouseX;
-    range.y = mouseY;
+    highlightRange.x = mouseX;
+    highlightRange.y = mouseY;
     // prevent default
     return false;
   }
