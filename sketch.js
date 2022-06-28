@@ -5,13 +5,13 @@ let balls = [];
 const minBallRadius = 2;
 const maxBallRadius = 10;
 const maxBallSpeed = 1;
+const minBallSpeed = 0.1;
 const startingBalls = 300;
 const minBalls = 1;
 const maxBalls = 2500;
 let numBallsSlider;
 let numBallsText;
 let highlightRange;
-//let inRange = [];
 let indexInRange = [];
 
 function setup() {
@@ -85,7 +85,7 @@ function updateBallArray(numBalls) {
   if (currentBalls == numBalls) return;
   if (currentBalls < numBalls) {
     for (let i = currentBalls; i < numBalls; i++)
-      balls.push(new Ball(minBallRadius, maxBallRadius, maxBallSpeed));
+      balls.push(new Ball(minBallRadius, maxBallRadius, minBallSpeed, maxBallSpeed));
     return;
   }
   //Remove excess balls
