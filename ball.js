@@ -1,5 +1,5 @@
 class Ball {
-  constructor(minRad = 2, maxRad = 10) {
+  constructor(minRad = 2, maxRad = 10, maxSpeed) {
     this.color = color(random(255),
       random(255),
       random(255));
@@ -9,33 +9,26 @@ class Ball {
     this.diameter = this.radius * 2;
     this.x = random(canvasW);
     this.y = random(canvasH);
-    const maxSpeed = 3;
-    this.vel = createVector(random(-maxSpeed, maxSpeed),
-      random(-maxSpeed, maxSpeed));
-    this.overlapped = false;
-    this.highlighted = false;
-  }
-  update() {
-    this.x += this.vel.x;
-    this.y += this.vel.y;
-    this.checkWalls();
+    this.maxSpeed = maxSpeed;
+    this.vel = createVector(random(-this.maxSpeed, this.maxSpeed),
+      random(-this.maxSpeed, this.maxSpeed));
     this.overlapped = false;
     this.highlighted = false;
   }
   checkWalls() {
-    if ((this.x + this.radius) >= canvasW) {
+    if (this.x > (canvasW - this.radius)) {
       this.x = canvasW - this.radius;
       this.vel.x *= -1;
     }
-    if ((this.x - this.radius) <= 0) {
+    if (this.x < this.radius) {
       this.x = this.radius;
       this.vel.x *= -1;
     }
-    if ((this.y + this.radius) > canvasH) {
+    if (this.y > (canvasH - this.radius)) {
       this.y = canvasH - this.radius;
       this.vel.y *= -1;
     }
-    if ((this.y - this.radius) <= 0) {
+    if (this.y < this.radius) {
       this.y = this.radius;
       this.vel.y *= -1;
     }
@@ -48,13 +41,22 @@ class Ball {
     else
       fill(this.color);
     noStroke();
-    circle(this.x, this.y, this.radius);
+    circle(this.x, this.y, this.diameter);
   }
   overlaps(other) {
-    let d = dist(this.x, this.y, other.x, other.y);
-    this.overlapped = d < (this.radius + other.radius);
-    if (this.overlapped)
-      other.overlapped = true;
+    let distSquared = (this.x - other.x) * (this.x - other.x) +
+      (this.y - other.y) * (this.y - other.y);
+    let radiusSumSquared = (this.radius + other.radius) *
+      (this.radius + other.radius);
+    this.overlapped = distSquared < radiusSumSquared;
+    if (this.overlapped) other.overlapped = true; 
     return this.overlapped;
+  }
+  update() {
+    this.x += this.vel.x;
+    this.y += this.vel.y;
+    this.checkWalls();
+    this.overlapped = false;
+    this.highlighted = false;
   }
 }
